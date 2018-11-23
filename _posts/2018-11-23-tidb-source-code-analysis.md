@@ -81,6 +81,12 @@ err = cc.writeResultset(goCtx, rs[0], false, false)
 
 会先进行逻辑优化，然后进行物理优化
 
+### 物理优化
+
+物理优化主要指的是基于规则的优化 [rule based optimization](https://pingcap.com/blog-cn/tidb-source-code-reading-7/)
+
+逻辑优化只要指的是基于代价的优化 [cost based optimization](https://pingcap.com/blog-cn/tidb-source-code-reading-8/)
+
 ## Execute 函数
 
 而 execute 是按照 volcano 模型进行的
