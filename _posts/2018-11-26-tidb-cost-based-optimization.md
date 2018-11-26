@@ -1,3 +1,8 @@
+---
+title: TiDB cost based optimization
+category: TiDB source code analysis
+draft: true
+---
 
 # CBO(cost based optimization) 流程
 
@@ -79,7 +84,7 @@ func (p *baseLogicalPlan) findBestTask(prop *property.PhysicalProperty) (bestTas
 select sum(s.a),count(t.b) from s join t on s.a = t.a and s.c < 100 and t.c > 10 group bys.a
 ```
 
-![](cbo1.png)
+![](/asserts/cbo1.png)
 > SortMerge Join（SMJ）
 > Hash Join（HJ）
 > Index Join（IdxJ）
