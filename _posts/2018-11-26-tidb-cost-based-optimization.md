@@ -85,11 +85,11 @@ select sum(s.a),count(t.b) from s join t on s.a = t.a and s.c < 100 and t.c > 10
 ```
 
 ![](/asserts/cbo1.png)
-> SortMerge Join（SMJ）
-> Hash Join（HJ）
-> Index Join（IdxJ）
-> IdxScan(IdxS)
-> TableScan(TS) 
+> - SortMerge Join（SMJ）
+> - Hash Join（HJ）
+> - Index Join（IdxJ）
+> - IdxScan(IdxS)
+> - TableScan(TS) 
 
 ## 物理算子简介
 - StreamAgg: 按 group by 的 key 有序的，所以它可以取到一个 group 的数据后，剋直接返回对应数据
