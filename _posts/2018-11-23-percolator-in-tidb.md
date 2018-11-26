@@ -40,75 +40,77 @@ Percolator分布式事务依赖底层数据库提供行级事务能力。
 
 # pseudocode
 
-    class Transaction {
-      struct Write { Row row; Column col; string value; }; 
-      vector<Write> writes ;
-      int start ts ;
-    
-    Transaction() : start ts (oracle.GetTimestamp()) {} 
-    void Set(Write w) { writes .push back(w); } 
-    bool Get(Row row, Column c, string* value) {
-      while (true) {
-        bigtable::Txn T = bigtable::StartRowTransaction(row); 
-        // Check for locks that signal concurrent writes.
-        if (T.Read(row, c+"lock", [0, start ts ])) {
-          // There is a pending lock; try to clean it and wait
-          BackoffAndMaybeCleanupLock(row, c);
-          continue; 
-        }
+```c++
+class Transaction {
+  struct Write { Row row; Column col; string value; }; 
+  vector<Write> writes ;
+  int start ts ;
 
-        // Find the latest write below our start timestamp.
-        latest write = T.Read(row, c+"write", [0, start ts ]); 
-        if (!latest write.found()) return false; // no data
-        int data ts = latest write.start timestamp();
-        *value = T.Read(row, c+"data", [data ts, data ts]); 
-        return true;
-      }
+Transaction() : start ts (oracle.GetTimestamp()) {} 
+void Set(Write w) { writes .push back(w); } 
+bool Get(Row row, Column c, string* value) {
+  while (true) {
+    bigtable::Txn T = bigtable::StartRowTransaction(row); 
+    // Check for locks that signal concurrent writes.
+    if (T.Read(row, c+"lock", [0, start ts ])) {
+      // There is a pending lock; try to clean it and wait
+      BackoffAndMaybeCleanupLock(row, c);
+      continue; 
     }
 
-    // Prewrite tries to lock cell w, returning false in case of conflict.
-    bool Prewrite(Write w, Write primary) {
-      Column c = w.col;
-      bigtable::Txn T = bigtable::StartRowTransaction(w.row);
+    // Find the latest write below our start timestamp.
+    latest write = T.Read(row, c+"write", [0, start ts ]); 
+    if (!latest write.found()) return false; // no data
+    int data ts = latest write.start timestamp();
+    *value = T.Read(row, c+"data", [data ts, data ts]); 
+    return true;
+  }
+}
 
-      // Abort on writes after our start timestamp ...
-      if (T.Read(w.row, c+"write", [start ts , ∞])) return false; 
-      // ... or locks at any timestamp.
-      if (T.Read(w.row, c+"lock", [0, ∞])) return false;
+// Prewrite tries to lock cell w, returning false in case of conflict.
+bool Prewrite(Write w, Write primary) {
+  Column c = w.col;
+  bigtable::Txn T = bigtable::StartRowTransaction(w.row);
 
-      T.Write(w.row, c+"data", start ts , w.value); 
-      T.Write(w.row, c+"lock", start ts ,
-          {primary.row, primary.col});  // The primary’s location.
-      return T.Commit();
+  // Abort on writes after our start timestamp ...
+  if (T.Read(w.row, c+"write", [start ts , ∞])) return false; 
+  // ... or locks at any timestamp.
+  if (T.Read(w.row, c+"lock", [0, ∞])) return false;
+
+  T.Write(w.row, c+"data", start ts , w.value); 
+  T.Write(w.row, c+"lock", start ts ,
+      {primary.row, primary.col});  // The primary’s location.
+  return T.Commit();
+}
+
+bool Commit() {
+  Write primary = writes [0];
+  vector<Write> secondaries(writes .begin()+1, writes .end()); 
+  if (!Prewrite(primary, primary)) return false;
+  for (Write w : secondaries)
+    if (!Prewrite(w, primary)) return false; 
+
+    int commit ts = oracle .GetTimestamp();
+
+    // Commit primary first.
+    Write p = primary;
+    bigtable::Txn T = bigtable::StartRowTransaction(p.row); 
+    if (!T.Read(p.row, p.col+"lock", [start ts , start ts ]))
+      return false; // aborted while working 
+    T.Write(p.row, p.col+"write", commit ts,
+        start ts ); // Pointer to data written at start ts . 
+    T.Erase(p.row, p.col+"lock", commit ts);
+    if (!T.Commit()) return false; // commit point
+
+    // Second phase: write out write records for secondary cells.
+    for (Write w : secondaries) {
+      bigtable::Write(w.row, w.col+"write", commit ts, start ts ); 
+      bigtable::Erase(w.row, w.col+"lock", commit ts);
     }
-
-    bool Commit() {
-      Write primary = writes [0];
-      vector<Write> secondaries(writes .begin()+1, writes .end()); 
-      if (!Prewrite(primary, primary)) return false;
-      for (Write w : secondaries)
-        if (!Prewrite(w, primary)) return false; 
-
-        int commit ts = oracle .GetTimestamp();
-
-        // Commit primary first.
-        Write p = primary;
-        bigtable::Txn T = bigtable::StartRowTransaction(p.row); 
-        if (!T.Read(p.row, p.col+"lock", [start ts , start ts ]))
-          return false; // aborted while working 
-        T.Write(p.row, p.col+"write", commit ts,
-            start ts ); // Pointer to data written at start ts . 
-        T.Erase(p.row, p.col+"lock", commit ts);
-        if (!T.Commit()) return false; // commit point
-
-        // Second phase: write out write records for secondary cells.
-        for (Write w : secondaries) {
-          bigtable::Write(w.row, w.col+"write", commit ts, start ts ); 
-          bigtable::Erase(w.row, w.col+"lock", commit ts);
-        }
-        return true; 
-      }
-    } // class Transaction
+    return true; 
+  }
+} // class Transaction
+```
 
 # corner case
 
