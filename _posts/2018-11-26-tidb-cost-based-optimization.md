@@ -1,6 +1,6 @@
 ---
-title: TiDB cost based optimization
-category: TiDB source code analysis
+title: [tidb] cost based optimization
+category: tidb
 draft: true
 ---
 

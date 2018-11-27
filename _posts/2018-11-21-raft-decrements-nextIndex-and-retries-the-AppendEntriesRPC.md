@@ -1,3 +1,9 @@
+---
+title: [raft] decrement next indexes and retries the AppendEntriesRPC
+category: raft
+draft: true
+---
+
 
 Leader 先发送一个 MsgProp
 

@@ -1,3 +1,9 @@
+---
+title: [raft] committing entries from previous term
+category: raft
+draft: true
+---
+
 
 ![](/asserts/raft1.png)
 

@@ -1,8 +1,9 @@
 ---
-title: percolator in tidb
-catagory: TiDB source code analysis
+title: [tidb] percolator in tidb
+catagory: tidb
 draft: true
 ---
+
 
 (**本文由 hoveywang 整理，转载在此博客**)
 

@@ -1,6 +1,6 @@
 ---
-title: TiDB rule based optimization
-category: TiDB source code analysis
+title: [tidb] rule based optimization
+category: tidb
 draft: true
 ---
 

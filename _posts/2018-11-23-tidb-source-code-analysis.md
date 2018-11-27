@@ -1,3 +1,10 @@
+---
+title: [tidb] source code analysis
+category: tidb
+draft: true
+---
+
+
 # 整体流程
 
 data, err := cc.readPacket()
