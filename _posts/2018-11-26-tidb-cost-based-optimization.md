@@ -1,5 +1,5 @@
 ---
-title: [tidb] cost based optimization
+title: tidb cost based optimization
 category: tidb
 draft: true
 ---

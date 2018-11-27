@@ -1,5 +1,5 @@
 ---
-title: [tidb] rule based optimization
+title: tidb rule based optimization
 category: tidb
 draft: true
 ---
