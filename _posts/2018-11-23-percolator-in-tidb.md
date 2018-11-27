@@ -1,5 +1,5 @@
 ---
-title: tidb percolator in tidb
+title: (tidb) percolator in tidb
 catagory: tidb
 draft: true
 ---

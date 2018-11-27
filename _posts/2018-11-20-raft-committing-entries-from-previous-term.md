@@ -1,5 +1,5 @@
 ---
-title: raft committing entries from previous term
+title: (raft) committing entries from previous term
 category: raft
 draft: true
 ---

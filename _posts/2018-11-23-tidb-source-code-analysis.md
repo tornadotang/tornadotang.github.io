@@ -1,5 +1,5 @@
 ---
-title: tidb source code analysis
+title: (tidb) source code analysis
 category: tidb
 draft: true
 ---

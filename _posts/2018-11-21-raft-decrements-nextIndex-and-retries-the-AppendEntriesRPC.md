@@ -1,5 +1,5 @@
 ---
-title: raft decrement next indexes and retries the AppendEntriesRPC
+title: (raft) decrement next indexes and retries the AppendEntriesRPC
 category: raft
 draft: true
 ---
