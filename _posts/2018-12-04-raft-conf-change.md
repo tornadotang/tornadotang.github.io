@@ -24,12 +24,12 @@ draft: true
 
 main函数里创建了4个channel，分别是：
 
-*数据入口：*
+**数据入口：**
 
 - proposeC： 让用户代码可以向raft提交写请求(Propose)
 - confChangeC： 让用户代码向raft提交配置变更请求(ProposeConfChange)
 
-*数据出口：*
+**数据出口：**
 
 - commitC： 把已经committed entries从raft中暴露出来给用户代码来进行写State Machine
 - errorC ： 让用户可以及时处理raft抛出的错误信息
@@ -117,7 +117,7 @@ main函数里创建了4个channel，分别是：
 
 但如果每次只添加或减少1个节点，假设最初有3个节点，有1个节点要加入。最初leader为server1，在server1的集群变更日志提交前，server1、server2、server3认为集群中有3个节点，只有server4认为集群中有4个节点，leader必然在server1、server2、server3中产生。如果在server1是leader时该集群变更日志提交了，那么集群中至少有2个server有该集群变更日志了，假如server1和server2都有该集群变更日志了，server3和server4还没有，那么server3和server4不可能被选为leader，因为他们的日志不够新。对于server4来说需要3个server同时同意才能成为leader，而server1和server2的日志比他新，不会同意他成为leader。对于server3来说，在集群变更日志提交前他认为集群中只有3个server，因此只会把投票请求发送给server1和server2，而server1和server2因为日志比他新不会同意；如果server3的集群变更日志也提交了，那么他人为集群中有4个节点，这时与server4一样，需要3个server同时同意才能成为leader，如果server1通过server2成为leader了，那么server1和server2都不会参与投票了。
 
-*因此每次一个节点的加入不管在集群变更日志应用前、应用过程中还是提应用后都不会出现两个leader的情况。*
+**因此每次一个节点的加入不管在集群变更日志应用前、应用过程中还是提应用后都不会出现两个leader的情况。**
 
 应用前是因为原来的节点不知道这个新的节点，不会发送投票给他，也不会处理新节点的投票请求；
 
