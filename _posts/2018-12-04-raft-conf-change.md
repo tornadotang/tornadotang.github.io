@@ -1,5 +1,5 @@
 ---
-title: (raft) confChange
+title: (raft) conf change
 category: raft
 draft: true
 ---
