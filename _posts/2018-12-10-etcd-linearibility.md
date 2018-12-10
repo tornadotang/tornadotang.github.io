@@ -1,5 +1,5 @@
 ---
-title: etcd linearibility
+title: (raft) etcd linearibility
 category: raft
 draft: true
 ---
