@@ -151,3 +151,109 @@ func (cw *streamWriter) run() {
 	...
 }
 ```
+
+# 一个 PUT 的请求的执行过程
+
+```go
+func (s *EtcdServer) Put(ctx context.Context, r *pb.PutRequest) (*pb.PutResponse, error) {
+	resp, err := s.raftRequest(ctx, pb.InternalRaftRequest{Put: r})
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*pb.PutResponse), nil
+}
+
+func (s *EtcdServer) raftRequest(ctx context.Context, r pb.InternalRaftRequest) (proto.Message, error) {
+	for {
+		resp, err := s.raftRequestOnce(ctx, r)
+		if err != auth.ErrAuthOldRevision {
+			return resp, err
+		}
+	}
+}
+
+func (s *EtcdServer) raftRequestOnce(ctx context.Context, r pb.InternalRaftRequest) (proto.Message, error) {
+	result, err := s.processInternalRaftRequestOnce(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	if result.err != nil {
+		return nil, result.err
+	}
+	return result.resp, nil
+}
+
+func (s *EtcdServer) processInternalRaftRequestOnce(ctx context.Context, r pb.InternalRaftRequest) (*applyResult, error) {
+	...
+	err = s.r.Propose(cctx, data)
+	...
+}
+
+func (n *node) Propose(ctx context.Context, data []byte) error {
+	return n.stepWait(ctx, pb.Message{Type: pb.MsgProp, Entries: []pb.Entry{{Data: data}}})
+}
+```
+
+这里的 s.r.Propose 调用的是 node 的 Propose
+
+使用的 golang 的 [embedded field 和 protomed](https://golang.org/ref/spec#Struct_types)
+
+```go
+type EtcdServer struct {
+	r            raftNode        // uses 64-bit atomics; keep 64-bit aligned.
+}
+
+type raftNode struct {
+	lg *zap.Logger
+
+	tickMu *sync.Mutex
+	raftNodeConfig
+}
+
+type raftNodeConfig struct {
+	lg *zap.Logger
+
+	// to check if msg receiver is removed from cluster
+	isIDRemoved func(id uint64) bool
+	raft.Node
+}
+```
+
+这里 raftNode 用了 embedded field raftNodeConfig，然后 raftNodeConfig 里面使用了 embedded field raft.Node
+
+所以调用 s.r.Propose, 看起来是用 EtcdServer 的 raftNode 的 Propose，而实际上是用了其 promoted 的 node.Propose
+
+而调用 Propose 之后：
+
+- 如果是 follower，则转给 leader 执行
+
+```go
+func stepFollower(r *raft, m pb.Message) error {
+	switch m.Type {
+	case pb.MsgProp:
+		if r.lead == None {
+			r.logger.Infof("%x no leader at term %d; dropping proposal", r.id, r.Term)
+			return ErrProposalDropped
+		} else if r.disableProposalForwarding {
+			r.logger.Infof("%x not forwarding to leader %x at term %d; dropping proposal", r.id, r.lead, r.Term)
+			return ErrProposalDropped
+		}
+		m.To = r.lead
+		r.send(m)
+```
+
+- 如果是 leader，执行 appendEntry，然后 broadcast 给 follower
+
+```go
+func stepLeader(r *raft, m pb.Message) error {
+	// These message types do not require any progress for m.From.
+	switch m.Type {
+	...
+	case pb.MsgProp:
+		...
+		if !r.appendEntry(m.Entries...) {
+			return ErrProposalDropped
+		}
+		r.bcastAppend()
+		return nil
+```
