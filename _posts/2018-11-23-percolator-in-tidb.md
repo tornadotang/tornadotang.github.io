@@ -1,6 +1,6 @@
 ---
 title: (tidb) percolator in tidb
-catagory: tidb
+category: tidb
 draft: true
 ---
 
