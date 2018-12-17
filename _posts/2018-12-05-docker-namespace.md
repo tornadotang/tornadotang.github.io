@@ -24,26 +24,6 @@ User | CLONE_NEWUSER | 用户和用户组
 
 # UTS namespace
 
-^_^
-
-[^_^]:
-    commentted-out contents
-    should be shift to right by four spaces (`>>`).
-
-[^_^]:
-	some comments
-
-[^_^]:
-    some comments
-
-[//]: <> (some com)
-[//]: # (This may be the most platform independent comment)
-[comment]: <> (This is a comment, it will not be included)
-[comment]: <> (in  the output file unless you use it in)
-[comment]: <> (a reference style link.)
-
-^_^
-
 # IPC namespace
 
 # PID namespace
