@@ -20,6 +20,11 @@ Percolator 提供两个主要的功能：
 
 Percolator分布式事务依赖底层数据库提供行级事务能力。
 
+总体来说就是一个经过优化的二阶段提交的实现，进行了一个二级锁的优化。由于锁是分两级的，primary 和 seconary，只要 primary 的行锁去掉，就表示该事务已经成功 提交，这样的好处是 secondary 的 commit 是可以异步进行的，只是在异步提交进行的过程中 ，如果此时有读请求，可能会需要做一下锁的清理工作。
+
+## reference
+[Percolator 和 TiDB 事务算法](https://www.pingcap.com/blog-cn/percolator-and-txn)
+
 # 事务
 
 来看下Percolator进行分布式事物处理的整体流程
