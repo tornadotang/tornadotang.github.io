@@ -9,6 +9,24 @@ draft: true
 
 # background
 
+## 经典的 2pc 的问题
+
+2pc 中的两个角色，coordinator(协调者/事务管理器) , participants (参与者/资源管理器）
+
+提交分为两个阶段：
+
+- prepare：coordinator 向所有参与者发送一个 prepare，参与者收到后拒绝其他提交者的 prepare
+
+- commit: 如果所有参与者返回同意，则 commit，否则 abort
+
+问题：
+
++ 如果有一个参与者挂了，那么其他参与者的这个资源一直被占用着，可以设置 timeout
+
++ 如果协调者挂了，那么所有参与者的这个资源被占着了
+
+## percolator
+
 Percolator要解决的问题很明确，如何高效地对一个既有数据库进行增量更新，其直接动机是提高google的网页库索引更新时效性。
 
 Percolator 提供两个主要的功能：
