@@ -145,6 +145,12 @@ bool Commit() {
 } // class Transaction
 ```
 
+## Why commit ts other than start ts
+
+![](/asserts/start-commit-ts.png)
+
+这里和 mysql 的 mvcc 实现的方式不太一样，mysql 中 write 也是 start 的时候 gtid，那么为了实现可重复读的隔离级别，那么读的时候不仅需要读小于开始时候的 gtid，并且正在进行的事务的 gtid 也不能读
+
 # corner case
 
 假如当前事务是T，T整个生命包含3个步骤：
